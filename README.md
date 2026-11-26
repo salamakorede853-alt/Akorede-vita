@@ -29,6 +29,7 @@ These are roadmap goals, not features currently implemented.
 
 - [Architecture](docs/ARCHITECTURE.md) — proposed system boundaries and technical decisions
 - [Roadmap](docs/ROADMAP.md) — milestones and completion criteria
+- [Upstream audit](docs/UPSTREAM_AUDIT.md) — initial Vita3K architecture, build, and licence review
 - [Contributing](CONTRIBUTING.md) — contribution workflow
 
 ## Development status
@@ -38,10 +39,11 @@ These are roadmap goals, not features currently implemented.
 - [x] Create project repository
 - [x] Document initial architecture
 - [x] Document the development roadmap
-- [ ] Inspect upstream architecture and current licence
-- [ ] Select the integration strategy
-- [ ] Establish reproducible Windows build instructions
-- [ ] Establish Android build instructions
+- [x] Complete initial Vita3K architecture and licence review
+- [x] Select a conditional GPL-compliant downstream-fork direction
+- [x] Document upstream Windows and Android build requirements
+- [ ] Complete third-party dependency and submodule licence inventory
+- [ ] Establish reproducible Windows and Android CI builds
 - [ ] Record baseline tests and compatibility status
 
 ## Legal and safety notes
