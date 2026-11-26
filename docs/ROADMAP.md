@@ -1,65 +1,63 @@
 # AKOREDE VITA — Development Roadmap
 
-**Current stage:** Milestone 01 — Foundation and audit
+**Current stage:** Native application scaffold and first build validation
 
 ## Milestone 01 — Foundation and audit
 
-- [x] Create the GitHub repository
-- [x] Add project overview
-- [x] Add proposed architecture
-- [x] Add roadmap and contribution guidance
-- [ ] Inspect upstream repository structure
-- [ ] Verify upstream licence and redistribution obligations
-- [ ] Select the integration strategy
-- [ ] Identify supported compiler, SDK, NDK, and CMake versions
-- [ ] Establish a reproducible Windows build
-- [ ] Establish a reproducible Android build
-- [ ] Record baseline test results
+- [x] Create the GitHub repository and initial documentation
+- [x] Complete preliminary Vita3K architecture and licence review
+- [ ] Complete third-party dependency and submodule licence inventory
+- [ ] Select and pin a Vita3K baseline commit
+- [ ] Establish reproducible upstream emulator builds
 
-**Completion criteria:** A documented, licence-reviewed source baseline with reproducible build instructions for at least one target and a clear plan for the second target.
+## Milestone 02 — Product design and interface
 
-## Milestone 02 — Product design
+- [x] Build the responsive browser UI prototype in `app-prototype/`
+- [x] Create Windows Qt application entry point
+- [x] Create Android Kotlin/Jetpack Compose application entry point
+- [x] Add shared C++ engine-status API used by both app shells
+- [ ] Review native screens on phone-sized and desktop-sized displays
+- [ ] Finalise accessibility, navigation, and platform interaction specifications
 
-- [ ] Define visual identity and accessibility rules
-- [ ] Design library, game details, settings, and controller screens
-- [ ] Define shared navigation and platform-specific interaction patterns
-- [ ] Review designs on phone-sized and desktop-sized screens
+**Current boundary:** The browser and native apps are shells only. They do not execute Vita software, load game files, or implement Vita hardware/system APIs.
 
-## Milestone 03 — Product integration
+## Milestone 03 — Build and integration
 
-- [ ] Add the branded application shell
-- [ ] Connect library discovery to supported emulator interfaces
-- [ ] Add configuration and input-management UX
-- [ ] Add diagnostics and compatibility presentation
-- [ ] Preserve existing emulator functionality
+- [x] Add a CMake build for the shared C++ status bridge
+- [x] Add CI job to compile the shared C++ library
+- [x] Add Android Gradle/NDK project and CI debug-APK build job
+- [ ] Confirm Android debug APK build passes on CI
+- [ ] Add Windows Qt dependencies to CI and compile the desktop shell
+- [ ] Generate Gradle wrapper and document pinned SDK/NDK versions
+- [ ] Complete upstream dependency/licence review
+- [ ] Select and pin a reviewed Vita3K revision
+- [ ] Establish a reproducible baseline emulator build
+- [ ] Define and implement the compliant emulator-core integration boundary
 
 ## Milestone 04 — Windows quality
 
 - [ ] Build and package a Windows development version
-- [ ] Test controller input and window resizing
-- [ ] Test graphics and audio configuration
+- [ ] Test window resizing, controller input, graphics, and audio
 - [ ] Add automated regression checks
 
 ## Milestone 05 — Android quality
 
 - [ ] Build and package an Android development version
 - [ ] Test touch and external controller input
-- [ ] Test app lifecycle and graphics surfaces
-- [ ] Test storage and permissions
-- [ ] Profile performance on representative devices
+- [ ] Test app lifecycle, graphics surfaces, storage permissions, and performance
+- [ ] Test on representative Android devices
 
 ## Milestone 06 — Release readiness
 
-- [ ] Complete licence and attribution review
+- [ ] Complete licence, attribution, and SBOM review
 - [ ] Publish corresponding source for covered copyleft components
 - [ ] Create reproducible release builds
 - [ ] Publish known-issues and compatibility documentation
-- [ ] Prepare release notes and support guidance
 
 ## Working rules
 
 - Never mark a task complete without evidence.
-- Keep upstream changes traceable.
+- Keep upstream changes traceable and preserve required notices.
 - Make small, reviewable commits.
 - Do not commit proprietary firmware, encryption keys, copyrighted game files, or secrets.
-- Prefer upstream contributions for generally useful emulator fixes.
+- Do not describe a shell or CI toolchain check as a working emulator.

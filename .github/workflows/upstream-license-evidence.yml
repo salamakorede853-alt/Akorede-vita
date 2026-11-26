@@ -1,0 +1,55 @@
+name: Pinned Vita3K licence evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect-evidence:
+    name: Collect exact-revision licence evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out AKOREDE VITA audit scripts
+        uses: actions/checkout@v4
+
+      - name: Clone the pinned Vita3K revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --no-checkout https://github.com/Vita3K/Vita3K.git "$RUNNER_TEMP/vita3k-upstream"
+          git -C "$RUNNER_TEMP/vita3k-upstream" checkout --detach c87e12578749d6267be9b0c669904fe22545b170
+
+      - name: Initialize all recursive submodules
+        id: submodules
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C "$RUNNER_TEMP/vita3k-upstream" submodule sync --recursive
+          git -C "$RUNNER_TEMP/vita3k-upstream" submodule update --init --recursive
+
+      - name: Collect licence files and source-header notices
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/audit_upstream_licenses.py "$RUNNER_TEMP/vita3k-upstream" "$RUNNER_TEMP/vita3k-license-evidence"
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vita3k-license-evidence-c87e125
+          path: ${{ runner.temp }}/vita3k-license-evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Report recursive submodule failure
+        if: steps.submodules.outcome != 'success'
+        shell: bash
+        run: |
+          echo "Recursive submodule initialization did not complete. Partial evidence was uploaded; unresolved repositories must be reviewed manually."
+          exit 1
