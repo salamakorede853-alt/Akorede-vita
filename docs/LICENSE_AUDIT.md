@@ -143,3 +143,40 @@ The main GPL v2 terms are identified, and the submodule graph is pinned for one 
 - Pinned submodule tree: https://github.com/Vita3K/Vita3K/tree/c87e12578749d6267be9b0c669904fe22545b170
 - Submodule declarations: https://github.com/Vita3K/Vita3K/blob/c87e12578749d6267be9b0c669904fe22545b170/.gitmodules
 - vcpkg manifest: https://github.com/Vita3K/Vita3K/blob/c87e12578749d6267be9b0c669904fe22545b170/vcpkg.json
+
+
+## 9. Exact-revision follow-up: the ten flagged components
+
+The licence and notice files below were inspected at the submodule commits pinned by the reviewed Vita3K revision. This narrows the uncertainty, but it does not replace checking the actual files compiled into each platform build.
+
+| Component | Finding at pinned revision | Preliminary assessment |
+|---|---|---|
+| Capstone | The pinned gitlink is `022575848782a4801fd150fdbc927effcbca0864`. The GitHub API did not expose a readable tree or licence file for this commit through the current inspection path. | **Unresolved.** Confirm repository redirect/commit availability and inspect the exact commit locally or via a complete Git clone before use. |
+| dlmalloc | `README.md` and source headers explicitly state that Doug Lea's original allocator and Gregory Popovitch's C++ conversion are released to the public domain, referencing CC0 1.0. | **Identified as public-domain/CC0 dedication.** Retain the attribution/context and verify whether any other file has separate notices. |
+| glslang | `LICENSE.txt` says glslang proper uses multiple licences: 3-clause BSD, 2-clause BSD, MIT, and Apache-2.0; it separately distinguishes preprocessor licensing and optional/external components. | **Identified as multi-licence.** Must map the actual compiled source files, especially preprocessor sources, to their applicable licence sections. Do not label the whole component with one SPDX identifier without that mapping. |
+| psvpfstools | The wrapper repository itself has no top-level licence file in the pinned tree. Its CMake file adds four nested submodules: libb64, libzrif, psvpfsparser, and zlib. | **Unresolved/transitive audit required.** Inspect the exact nested commits and each component's licence. Also review OpenSSL and system/package zlib usage selected by CMake. |
+| spdlog | Pinned `LICENSE` contains the MIT licence and expressly notes dependency on fmt under MIT. | **Identified as MIT**, with fmt's separate notice retained. |
+| stb | Pinned `LICENSE` offers two alternatives: MIT or public domain under The Unlicense. | **Identified as dual option.** Choose and document one option consistently for the files actually used; keep the required MIT notice if selecting MIT. Check individual header notices if present. |
+| substitute | Pinned `LICENSE.txt` states most files are LGPL-2.1-or-later with a special static-linking exception; `substrate.h` is based on CydiaSubstrate and under LGPLv3; `substitute.h` and generated files are public domain. | **Copyleft component requiring file-level mapping.** Determine whether Vita3K builds/uses the substrate compatibility layer and whether it is linked statically or dynamically. Preserve the applicable LGPL notices and meet corresponding source/relinking requirements. |
+| Tracy | Pinned `LICENSE` states 3-clause BSD. | **Identified as BSD-3-Clause** for Tracy itself. Audit any bundled optional third-party components separately if enabled or distributed. |
+| concurrentqueue | Pinned `LICENSE.md` offers Simplified BSD and Boost Software License 1.0 as alternatives. It expressly excludes certain benchmark/test components authored by others; the semaphore implementation carries a zlib licence. | **Identified as dual-licensed.** Choose/document the applicable option for the library and separately preserve the semaphore's zlib notice if used. Do not assume benchmark/test exceptions cover runtime code. |
+| xxHash | Pinned `LICENSE` states BSD 2-Clause. | **Identified as BSD-2-Clause** for the library; inspect optional CLI/test code only if included in a distribution. |
+
+### psvpfstools nested dependency pins
+
+The reviewed psvpfstools commit pins these nested repositories:
+
+| Nested component | Exact commit | Next action |
+|---|---|---|
+| libb64 | `3896b7a74c70baed0e2f6039a1dbd723e5d5cc8f` | Inspect licence and notices |
+| libzrif | `7d1e69bee7d2f08ea5754eff4463c041aacd49af` | Inspect licence and notices |
+| psvpfsparser | `05d43a06a6189302d31091c65e4fc8707476eef3` | Inspect licence and notices |
+| zlib | `cb210089eb06453199578993566012493f6f7d21` | Inspect licence and notices |
+
+### Updated result for the ten
+
+- **Licence text identified:** dlmalloc, glslang (multiple licence regimes), spdlog, stb, substitute (file-specific LGPL/public-domain terms), Tracy, concurrentqueue, xxHash.
+- **Still unresolved at exact pinned commit:** Capstone and psvpfstools' own wrapper repository.
+- **Additional transitive review required:** four psvpfstools nested submodules; glslang file-level licence mapping; substitute file/linkage mapping; optional third-party content bundled by Tracy/concurrentqueue.
+
+This means the ten-component check has made substantial progress, but the dependency audit is **not complete** and the release gate remains closed. The next work item is to resolve Capstone's pinned commit and audit the four psvpfstools nested dependencies, then inspect the exact build graph to determine which optional/test-only components actually ship.
