@@ -1,37 +1,40 @@
 # AKOREDE VITA — Development Roadmap
 
-**Current stage:** Milestone 01 — Foundation and audit
+**Current stage:** Milestone 02 — Product design and interface prototype
 
 ## Milestone 01 — Foundation and audit
 
 - [x] Create the GitHub repository
-- [x] Add project overview
-- [x] Add proposed architecture
-- [x] Add roadmap and contribution guidance
-- [ ] Inspect upstream repository structure
-- [ ] Verify upstream licence and redistribution obligations
-- [ ] Select the integration strategy
-- [ ] Identify supported compiler, SDK, NDK, and CMake versions
-- [ ] Establish a reproducible Windows build
-- [ ] Establish a reproducible Android build
-- [ ] Record baseline test results
+- [x] Add project overview, architecture, roadmap, and contribution guidance
+- [x] Complete initial Vita3K architecture and licence review
+- [x] Select a conditional GPL-compliant downstream-fork direction
+- [x] Document upstream Windows and Android build requirements
+- [ ] Complete third-party dependency and submodule licence inventory
+- [x] Add initial Windows and Android CI toolchain-readiness checks
+- [ ] Establish reproducible Windows and Android emulator builds
+- [ ] Record baseline tests and compatibility status
 
 **Completion criteria:** A documented, licence-reviewed source baseline with reproducible build instructions for at least one target and a clear plan for the second target.
 
-## Milestone 02 — Product design
+## Milestone 02 — Product design and interface prototype
 
-- [ ] Define visual identity and accessibility rules
-- [ ] Design library, game details, settings, and controller screens
+- [x] Build the first responsive, interactive UI prototype in `app-prototype/`
+- [ ] Review the prototype on phone-sized and desktop-sized screens
+- [ ] Define visual identity, accessibility, and interaction rules
+- [ ] Complete editable design specifications for library, game details, settings, and controller screens
 - [ ] Define shared navigation and platform-specific interaction patterns
-- [ ] Review designs on phone-sized and desktop-sized screens
+
+**Prototype boundary:** The current browser prototype is a UI demonstration only. It does not emulate games, access local game folders, configure physical controllers, or communicate with Vita3K.
 
 ## Milestone 03 — Product integration
 
-- [ ] Add the branded application shell
+- [ ] Complete the upstream dependency and licence gate before source integration
+- [ ] Establish a reproducible upstream baseline build
+- [ ] Choose and document native UI integration boundaries for Windows and Android
+- [ ] Add the branded application shell without removing existing emulator functionality
 - [ ] Connect library discovery to supported emulator interfaces
 - [ ] Add configuration and input-management UX
 - [ ] Add diagnostics and compatibility presentation
-- [ ] Preserve existing emulator functionality
 
 ## Milestone 04 — Windows quality
 
