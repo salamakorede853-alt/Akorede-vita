@@ -84,3 +84,21 @@ These requirements are not satisfied by this chat alone. We can prepare source c
 ## Decision
 
 **Proceed with Vita3K as the candidate technical base, conditionally.** The next gate is a dependency/licence inventory and a minimal reproducible build in CI. Do not yet merge upstream emulator source into the AKOREDE VITA repository or claim a working emulator build.
+
+
+## Dependency inventory — first pass
+
+The upstream `.gitmodules` file lists external components including Boost, Capstone, dirent, dlmalloc, FFmpeg, glslang, GoogleTest, libfat16, printf, pugixml, SDL, spdlog, SPIRV-Cross, stb, Vita toolchain utilities, Vulkan Memory Allocator C++ bindings, yaml-cpp, psvpfstools, xxHash, dynarmic, fmt, LibAtrac9, Tracy, nativefiledialog-extended, cubeb, concurrentqueue, libadrenotools, and substitute.
+
+The root `vcpkg.json` manifest additionally declares Boost components, curl, OpenSSL, and zlib.
+
+This is an inventory of declared submodules and manifest dependencies, **not a completed licence clearance**. Each pinned revision, nested dependency, build-time component, runtime component, and bundled binary must be checked against its own licence and redistribution terms. Some dependencies may have different licences or additional notices. A Software Bill of Materials (SBOM) should be generated from the exact commit selected for the fork before any public binary release.
+
+Upstream references:
+- https://github.com/Vita3K/Vita3K/blob/master/.gitmodules
+- https://github.com/Vita3K/Vita3K/blob/master/vcpkg.json
+- https://github.com/Vita3K/Vita3K/blob/master/.github/workflows/c-cpp.yml
+
+## Build pipeline observation
+
+The upstream GitHub Actions workflow builds Windows x64 and Windows ARM64 desktop targets, as well as Linux and macOS targets, and runs an autotest job. The workflow checks out submodules recursively and uses a pinned Qt version. This is useful as a model for our own CI, but it does not establish that an AKOREDE VITA fork builds successfully. We still need to design and run our own pipeline, including Android build and artifact validation.
