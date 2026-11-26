@@ -1,6 +1,8 @@
 #include <QApplication>
+#include <QFont>
 #include <QLabel>
 #include <QMainWindow>
+#include <QString>
 #include <QVBoxLayout>
 #include <QWidget>
 
