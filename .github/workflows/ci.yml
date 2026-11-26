@@ -65,7 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
@@ -85,20 +86,22 @@ jobs:
           path: native/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
-  windows-toolchain-readiness:
-    name: Windows C++ toolchain readiness
+  windows-desktop-build:
+    name: Build Windows Qt application shell
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify Windows build tools
+      - name: Install Qt 6
+        id: qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          modules: qtbase
+      - name: Configure Windows application
         shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          git --version
-          cmake --version
-          $vswhere = "${env:ProgramFiles(x86)}\\Microsoft Visual Studio\\Installer\\vswhere.exe"
-          if (-not (Test-Path $vswhere)) { throw "Visual Studio Installer / vswhere was not found." }
-          $installation = & $vswhere -latest -products * -property installationPath
-          if (-not $installation) { throw "No Visual Studio installation was detected." }
-          Write-Host "Visual Studio detected: $installation"
-          Write-Host "Qt 6 desktop compilation is a subsequent build task."
+        run: cmake -S native/windows -B build/windows -DCMAKE_PREFIX_PATH="${{ steps.qt.outputs.qt-path }}"
+      - name: Compile Windows application
+        run: cmake --build build/windows --config Release
