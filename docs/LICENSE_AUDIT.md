@@ -151,10 +151,10 @@ The licence and notice files below were inspected at the submodule commits pinne
 
 | Component | Finding at pinned revision | Preliminary assessment |
 |---|---|---|
-| Capstone | The pinned gitlink is `022575848782a4801fd150fdbc927effcbca0864`. The GitHub API did not expose a readable tree or licence file for this commit through the current inspection path. | **Unresolved.** Confirm repository redirect/commit availability and inspect the exact commit locally or via a complete Git clone before use. |
+| Capstone | The pinned commit `022575848782a4801fd150fdbc927effcbca0864` resolves in the canonical `capstone-engine/capstone` repository as Capstone 5.0.9. Its exact-revision `LICENSE.TXT` contains the three-condition BSD licence. The same tree also contains `LICENSE_LLVM.TXT`, which carries the University of Illinois/NCSA licence for LLVM-derived portions. | **Partially identified.** Treat the main Capstone code as BSD-3-Clause, retain `LICENSE.TXT`, and map any compiled LLVM-derived files to `LICENSE_LLVM.TXT` before release. The repository README specifically instructs redistributors to attach `LICENSE.TXT`. |
 | dlmalloc | `README.md` and source headers explicitly state that Doug Lea's original allocator and Gregory Popovitch's C++ conversion are released to the public domain, referencing CC0 1.0. | **Identified as public-domain/CC0 dedication.** Retain the attribution/context and verify whether any other file has separate notices. |
 | glslang | `LICENSE.txt` says glslang proper uses multiple licences: 3-clause BSD, 2-clause BSD, MIT, and Apache-2.0; it separately distinguishes preprocessor licensing and optional/external components. | **Identified as multi-licence.** Must map the actual compiled source files, especially preprocessor sources, to their applicable licence sections. Do not label the whole component with one SPDX identifier without that mapping. |
-| psvpfstools | The wrapper repository itself has no top-level licence file in the pinned tree. Its CMake file adds four nested submodules: libb64, libzrif, psvpfsparser, and zlib. | **Unresolved/transitive audit required.** Inspect the exact nested commits and each component's licence. Also review OpenSSL and system/package zlib usage selected by CMake. |
+| psvpfstools | The wrapper repository itself has no top-level licence file in the pinned tree. Its CMake file adds four nested submodules: libb64, libzrif, psvpfsparser, and zlib. | **Unresolved.** The wrapper has no located licence grant at this revision; audit the nested projects and establish the wrapper's own rights before redistribution. Also review OpenSSL and system/package zlib usage selected by CMake. |
 | spdlog | Pinned `LICENSE` contains the MIT licence and expressly notes dependency on fmt under MIT. | **Identified as MIT**, with fmt's separate notice retained. |
 | stb | Pinned `LICENSE` offers two alternatives: MIT or public domain under The Unlicense. | **Identified as dual option.** Choose and document one option consistently for the files actually used; keep the required MIT notice if selecting MIT. Check individual header notices if present. |
 | substitute | Pinned `LICENSE.txt` states most files are LGPL-2.1-or-later with a special static-linking exception; `substrate.h` is based on CydiaSubstrate and under LGPLv3; `substitute.h` and generated files are public domain. | **Copyleft component requiring file-level mapping.** Determine whether Vita3K builds/uses the substrate compatibility layer and whether it is linked statically or dynamically. Preserve the applicable LGPL notices and meet corresponding source/relinking requirements. |
@@ -170,13 +170,25 @@ The reviewed psvpfstools commit pins these nested repositories:
 |---|---|---|
 | libb64 | `3896b7a74c70baed0e2f6039a1dbd723e5d5cc8f` | Inspect licence and notices |
 | libzrif | `7d1e69bee7d2f08ea5754eff4463c041aacd49af` | Inspect licence and notices |
-| psvpfsparser | `05d43a06a6189302d31091c65e4fc8707476eef3` | Inspect licence and notices |
+| psvpfsparser | `05d43a06a6189302d31091c65e4fc8707476eef3` | Exact tree contains no root `LICENSE`, `COPYING`, or `NOTICE` file. CMake builds its C++ source files into the `psvpfsparser` library. **Rights remain unresolved; do not infer a licence from absence of a file.** |
 | zlib | `cb210089eb06453199578993566012493f6f7d21` | Inspect licence and notices |
 
 ### Updated result for the ten
 
-- **Licence text identified:** dlmalloc, glslang (multiple licence regimes), spdlog, stb, substitute (file-specific LGPL/public-domain terms), Tracy, concurrentqueue, xxHash.
-- **Still unresolved at exact pinned commit:** Capstone and psvpfstools' own wrapper repository.
-- **Additional transitive review required:** four psvpfstools nested submodules; glslang file-level licence mapping; substitute file/linkage mapping; optional third-party content bundled by Tracy/concurrentqueue.
+- **Licence text identified:** Capstone's main code (BSD-3-Clause, with a separate LLVM-derived licence file to map), dlmalloc, glslang (multiple licence regimes), spdlog, stb, substitute (file-specific LGPL/public-domain terms), Tracy, concurrentqueue, and xxHash.
+- **Still unresolved:** psvpfstools' own wrapper repository and the exact licence terms for its nested `libb64`, `libzrif`, `psvpfsparser`, and zlib submodules.
+- **Additional file/build mapping required:** Capstone LLVM-derived files; glslang file-level licence mapping; substitute file/linkage mapping; optional third-party content bundled by Tracy/concurrentqueue.
 
-This means the ten-component check has made substantial progress, but the dependency audit is **not complete** and the release gate remains closed. The next work item is to resolve Capstone's pinned commit and audit the four psvpfstools nested dependencies, then inspect the exact build graph to determine which optional/test-only components actually ship.
+The four nested repository endpoints currently redirect to renamed GitHub repository IDs that the connected GitHub reader cannot inspect. The exact commit IDs are preserved above; no licence has been guessed from repository names or current default branches. `psvpfsparser`'s pinned tree was readable and contains no root licence/notice file, while its CMake configuration compiles its C++ sources into a library linked with `libzRIF`, `libb64`, zlib, and OpenSSL Crypto. This is a concrete unresolved rights issue, not proof that the code is unlicensed.
+
+This stage is now partially resolved: Capstone's principal licence is identified, but the dependency audit is **not complete** and the release gate remains closed. Next, obtain the exact nested repositories' source/licence records through a full recursive clone or another verifiable source, then map actual compiled files and platform build choices.
+
+
+### Additional exact-revision source records
+
+- Capstone 5.0.9 pinned commit: https://github.com/capstone-engine/capstone/commit/022575848782a4801fd150fdbc927effcbca0864
+- Capstone BSD licence: https://raw.githubusercontent.com/capstone-engine/capstone/022575848782a4801fd150fdbc927effcbca0864/LICENSE.TXT
+- Capstone LLVM-derived licence: https://raw.githubusercontent.com/capstone-engine/capstone/022575848782a4801fd150fdbc927effcbca0864/LICENSE_LLVM.TXT
+- psvpfsparser pinned tree: https://github.com/Vita3K/psvpfsparser/tree/05d43a06a6189302d31091c65e4fc8707476eef3
+- psvpfsparser CMake source list and link configuration: https://github.com/Vita3K/psvpfsparser/blob/05d43a06a6189302d31091c65e4fc8707476eef3/cmake/CMakeLists.txt
+- psvpfstools pinned CMake and submodule declarations: https://github.com/Vita3K/psvpfstools/tree/e9c5c7c4489a20ce2cb1a8b517caf00556594a12
