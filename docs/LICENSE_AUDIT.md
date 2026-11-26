@@ -248,3 +248,33 @@ This section records what the pinned Vita3K CMake files actually select. It is a
 4. psvpfstools remains a release blocker until its own code and all four nested submodules have established licence terms.
 5. The Discord SDK must not be silently included in an SBOM as though it were part of the pinned Vita3K Git tree.
 6. No Vita3K engine source has been integrated into AKOREDE VITA by this audit; the current app scaffold remains separate and reports that its emulator core is not connected.
+
+
+## 11. Android vcpkg baseline: direct package inventory
+
+The root manifest pins vcpkg baseline `77df67cfff9c12ccfdb52284e07c87c75092f723`. At that exact baseline, the six direct package manifests resolve as follows:
+
+| Direct package | Manifest version | Licence expression | Direct dependency observations |
+|---|---:|---|---|
+| boost-icl | 1.90.0 (port 1) | BSL-1.0 | Depends on numerous Boost component ports, including assert, config, container, core, date-time, iterator, MPL, range, rational, type-traits, utility and headers |
+| boost-program-options | 1.90.0 (port 1) | BSL-1.0 | Depends on Boost any, bind, config, core, function, iterator, lexical-cast, smart-ptr, tokenizer, type-traits and related components |
+| boost-variant | 1.90.0 (port 1) | BSL-1.0 | Depends on Boost assert, config, container-hash, core, integer, MPL, preprocessor, type-index, type-traits and related components |
+| curl | 8.19.0 | `curl AND ISC AND BSD-3-Clause` | Depends on zlib; default features include `non-http` and `ssl`. On non-Windows targets the default SSL feature selects OpenSSL |
+| openssl | 3.6.1 (port 3) | Apache-2.0 | Its manifest uses MIT-licensed vcpkg CMake helper ports as host/build dependencies |
+| zlib | 1.3.1 | Zlib | Uses the MIT-licensed vcpkg CMake helper port as a host/build dependency |
+
+The Boost component manifests and the inspected Boost transitive manifests identify Boost Software License 1.0. This is not yet a complete transitive inventory: every resolved Boost port, host tool, and platform-conditioned dependency must be collected from the vcpkg install plan or installed package metadata before SBOM generation.
+
+### Important platform distinction
+
+The root CMake file activates the vcpkg Android helper only when `CMAKE_SYSTEM_NAME` is Android. The six-package vcpkg manifest is therefore directly relevant to the Android build path. Do not automatically apply this exact package resolution to Windows. The desktop path can select system libraries or source fallbacks instead.
+
+The CMake logic prefers system curl when available and otherwise fetches curl at commit `68720b4837284335b2d63cb358f8f6ce65f5bc55` (identified in the source comment as release 8.21.0). This differs from the Android vcpkg port version 8.19.0 and must be recorded as a separate dependency route. Similarly, OpenSSL can resolve from the system or from platform-specific fallback downloads/builds. Capture the actual route for each target build rather than merging them into one assumed dependency version.
+
+### Build-documentation mismatch
+
+The pinned root `CMakeLists.txt` explicitly sets `CMAKE_CXX_STANDARD 23`, while the pinned `building.md` introduction describes the requirement as a C++20-compatible compiler. For reproducible builds, use the actual CMake configuration as authoritative for this revision and record C++23 as the required language standard. The upstream documentation should be clarified before treating its build instructions as fully reproducible.
+
+### Current vcpkg result
+
+The direct Android package versions and their manifest licence expressions are now recorded. The complete transitive closure, actual package installation plan, selected curl/OpenSSL paths, and exact package copyright/notice payloads remain to be captured. This is still a preliminary dependency inventory, not a release SBOM.
