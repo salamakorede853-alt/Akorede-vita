@@ -90,7 +90,9 @@ This is not yet a complete package inventory. We still need to resolve the exact
 
 ### FFmpeg fork
 
-Vita3K's FFmpeg submodule points to a Vita3K-maintained fork, and repository metadata reports LGPL-2.1. We must inspect the exact fork revision, local patches, enabled/disabled codecs and libraries, and final link configuration. FFmpeg licensing can depend on build options and included components; do not treat the repository-level label alone as final clearance.
+The reviewed Vita3K tree pins `Vita3K/ffmpeg-core` at `eaf918c97e76d3fa7ec5bfea63a307fced559e76`. Its `copyright` file contains the GNU LGPL version 2.1 text. The fork's CMake file downloads prebuilt FFmpeg libraries and links `avformat`, `avcodec`, `swscale`, `avutil`, `avfilter`, and `swresample` as static archives (`.a`; Windows uses `.lib`). The renderer links the FFmpeg target, so this is a runtime dependency, not merely a build-time tool.
+
+The pinned fork's `ffmpeg.patch` modifies the vcpkg FFmpeg port to use `--disable-everything` and explicitly enable a limited list of decoders, encoders, muxers, demuxers, parsers, a file protocol, and an MJPEG bitstream filter. Its build workflow pins a separate vcpkg revision (`34823ada10080ddca99b60e85f80f55e18a44eea`) and applies that patch. This is useful evidence about the intended codec set, but the final configure logs and actual prebuilt archives still need verification. Because the current integration links static archives, the release plan must specifically address the LGPL 2.1 requirements for a relinkable application, corresponding source, notices, and the exact build scripts. Check the selected FFmpeg source files for any additional licence notices before treating the fork as cleared.
 
 ### Components without machine-readable licence metadata
 
@@ -192,3 +194,57 @@ This stage is now partially resolved: Capstone's principal licence is identified
 - psvpfsparser pinned tree: https://github.com/Vita3K/psvpfsparser/tree/05d43a06a6189302d31091c65e4fc8707476eef3
 - psvpfsparser CMake source list and link configuration: https://github.com/Vita3K/psvpfsparser/blob/05d43a06a6189302d31091c65e4fc8707476eef3/cmake/CMakeLists.txt
 - psvpfstools pinned CMake and submodule declarations: https://github.com/Vita3K/psvpfstools/tree/e9c5c7c4489a20ce2cb1a8b517caf00556594a12
+
+
+## 10. First-pass platform build graph and runtime classification
+
+This section records what the pinned Vita3K CMake files actually select. It is a source/build-graph review, not proof that every target is present in every final binary. Final inclusion must be confirmed from platform build logs, link maps, and packaged artefacts.
+
+### Runtime-linked components visible in the CMake graph
+
+| Component | Evidence in pinned build files | Platform/usage note |
+|---|---|---|
+| Capstone | `vita3k/cpu/CMakeLists.txt` links `capstone` into the CPU library | CPU runtime dependency; main BSD licence identified, LLVM-derived files still need mapping |
+| Dynarmic | CPU library links `dynarmic` and `merry::mcl` | CPU runtime dependency |
+| FFmpeg | Renderer links `ffmpeg`; FFmpeg target links six static library archives | Runtime dependency; LGPL 2.1 static-link compliance needs specific review |
+| psvpfstools / psvpfsparser | Main `vita3k` target links `psvpfsparser`; package library also links it | Runtime dependency; wrapper and nested dependency rights unresolved |
+| SDL3 | Renderer, audio and frontend link SDL3; bundled SDL is default unless `VITA3K_USE_SYSTEM_SDL` is enabled | Runtime dependency; submodule licence and notices must match the selected system/bundled build |
+| cubeb | Audio library links cubeb | Runtime audio dependency; CMake disables tests, Rust libraries and tools and bundles Speex |
+| pugixml | Main Android target and app link pugixml | Runtime dependency |
+| xxHash | Renderer links xxHash | Runtime dependency |
+| concurrentqueue | Renderer links concurrentqueue | Runtime dependency |
+| stb | Renderer links stb | Runtime dependency; identify exact headers used and selected licence option |
+| substitute | Added as an external CMake subdirectory | Confirm which targets/files are actually linked; LGPL/static exception mapping remains necessary |
+| OpenSSL | psvpfstools is configured after OpenSSL; crypto/SSL interface targets are created | System OpenSSL is preferred when found; platform-specific fallback builds/downloads exist |
+| curl | System curl is preferred; otherwise CMake FetchContent pins curl commit `68720b4837284335b2d63cb358f8f6ce65f5bc55` | Runtime/feature dependency needs exact system-vs-fetched resolution per build |
+| Boost | Header-only components; system Boost 1.82+ preferred unless options force bundled Boost | Header dependency; system/bundled source choice changes SBOM attribution |
+| fmt / spdlog | fmt and spdlog are added as external targets; spdlog is configured to use external fmt | Runtime logging dependency; MIT notices required |
+| libadrenotools | Added only for Android when detected architecture is `arm64` | Android arm64-specific dependency |
+| Qt 6 | Qt frontend is configured and linked only when `NOT ANDROID` | Desktop UI dependency; not used by Android frontend |
+
+### Conditional, development, or platform-only components
+
+- **Tracy:** built only when the configuration is not Release. Its core-component linkage is controlled by `TRACY_ENABLE_ON_CORE_COMPONENTS`; the option is enabled by default in non-Release configurations. Keep it out of production Release builds unless intentionally enabled and separately documented.
+- **GoogleTest:** a static test library target is declared. Confirm whether any release target links or packages it; it should normally remain test/build-only.
+- **Native File Dialog Extended:** added only when `NOT ANDROID`.
+- **Discord Game SDK:** enabled only on supported desktop targets when rich presence is enabled. It is downloaded as a separate archive and is not a Vita3K Git submodule; its own SDK licence and redistribution terms must be reviewed before shipping it.
+- **Vulkan validation layers:** downloaded for non-Release Android configurations when the expected prebuilt layer is absent. Treat as development/debug artefacts unless a release package demonstrably includes them.
+- **glslang / SPIRV-Cross:** both are added to the build. The inspected CMake disables several optional binaries, CLI targets, tests, and language backends by default; actual linked library targets still need to be mapped to source files and licence sections.
+- **System-vs-bundled choices:** Boost, SDL, OpenSSL, and curl can resolve differently according to host packages and CMake options. A single generic SBOM will not be sufficient for Android and Windows; produce a resolved SBOM per target configuration.
+
+### Android-specific observations
+
+- The Android root CMake setup activates the vcpkg Android toolchain helper before project configuration.
+- The helper maps Android ABIs to vcpkg triplets, including `arm64-v8a` to `arm64-android` and `x86_64` to `x64-android`.
+- The Android build instructions call for both arm64 and x64 vcpkg triplets. The user's preferred Helio G100 target is an ARM64 device, so the arm64-v8a configuration is the relevant first device build; performance and compatibility still require real-device testing.
+- Android uses the JNI shared library target and does not build the Qt desktop frontend.
+- Android Release configuration excludes symbols from several static libraries, including OpenSSL and FFmpeg archives. This is a symbol-visibility/linker detail, not evidence that those libraries are absent or dynamically linked.
+
+### Reproducibility and audit consequences
+
+1. The dependency graph differs by platform and build type. We need separate Android arm64 Release and Windows Release inventories before generating a release SBOM.
+2. We need to capture whether each system-or-bundled fallback was selected, plus exact package versions and checksums for downloaded archives.
+3. FFmpeg's static archives and LGPL 2.1 compliance are a release blocker until the corresponding source, notices, build scripts, and relinking path are prepared.
+4. psvpfstools remains a release blocker until its own code and all four nested submodules have established licence terms.
+5. The Discord SDK must not be silently included in an SBOM as though it were part of the pinned Vita3K Git tree.
+6. No Vita3K engine source has been integrated into AKOREDE VITA by this audit; the current app scaffold remains separate and reports that its emulator core is not connected.
