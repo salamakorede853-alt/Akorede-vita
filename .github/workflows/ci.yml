@@ -1,0 +1,106 @@
+name: AKOREDE VITA CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: akorede-vita-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-validation:
+    name: Repository and documentation checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate required project files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f README.md
+          test -f CONTRIBUTING.md
+          test -f docs/ARCHITECTURE.md
+          test -f docs/ROADMAP.md
+          test -f docs/UPSTREAM_AUDIT.md
+          grep -q "AKOREDE VITA" README.md
+          grep -q "GPL" docs/UPSTREAM_AUDIT.md
+          echo "Required project foundation files are present."
+
+      - name: Check README local documentation links
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          readme = Path("README.md").read_text(encoding="utf-8")
+          links = re.findall(r"\[[^]]+\]\(([^)]+)\)", readme)
+          missing = [
+              link for link in links
+              if not link.startswith(("https://", "http://", "#", "mailto:"))
+              and not Path(link).exists()
+          ]
+          if missing:
+              raise SystemExit("Missing README link targets: " + ", ".join(missing))
+          print(f"Validated {len(links)} README links.")
+          PY
+
+  windows-toolchain-readiness:
+    name: Windows C++ toolchain readiness
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify Windows build tools are available
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          git --version
+          cmake --version
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            throw "Visual Studio Installer / vswhere was not found on the runner."
+          }
+          $installation = & $vswhere -latest -products * -property installationPath
+          if (-not $installation) {
+            throw "No Visual Studio installation was detected."
+          }
+          Write-Host "Visual Studio installation detected: $installation"
+          Write-Host "This is a toolchain readiness check, not an emulator compilation."
+
+  android-toolchain-readiness:
+    name: Android toolchain readiness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Verify Android SDK environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -version
+          if [ -z "${ANDROID_HOME:-}" ] && [ -z "${ANDROID_SDK_ROOT:-}" ]; then
+            echo "Android SDK environment is not preconfigured on this runner."
+            exit 1
+          fi
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          test -d "$SDK_ROOT"
+          echo "Android SDK directory detected: $SDK_ROOT"
+          echo "This is a toolchain readiness check, not an APK build."
