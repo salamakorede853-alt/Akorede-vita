@@ -278,3 +278,18 @@ The pinned root `CMakeLists.txt` explicitly sets `CMAKE_CXX_STANDARD 23`, while 
 ### Current vcpkg result
 
 The direct Android package versions and their manifest licence expressions are now recorded. The complete transitive closure, actual package installation plan, selected curl/OpenSSL paths, and exact package copyright/notice payloads remain to be captured. This is still a preliminary dependency inventory, not a release SBOM.
+
+
+## 12. Cloud evidence collection workflow
+
+To avoid relying on incomplete repository API views, AKOREDE VITA now contains a manual GitHub Actions evidence collector:
+
+- Workflow: `.github/workflows/upstream-license-evidence.yml`
+- Collector: `scripts/audit_upstream_licenses.py`
+- Upstream revision: `c87e12578749d6267be9b0c669904fe22545b170`
+- Intended output: recursive submodule status, exact candidate licence/notice files with SHA-256 hashes, and source-header notice excerpts.
+- Artifact name: `vita3k-license-evidence-c87e125`
+
+The workflow is deliberately manual (`workflow_dispatch`) and does not build or integrate the emulator. It attempts to initialize all recursive submodules, preserves partial evidence if that step fails, uploads the evidence bundle, and reports a failed submodule checkout as a failed job. The collector is an evidence-gathering aid only; it does not classify licences or provide legal clearance.
+
+**Execution status:** committed to the branch, but not yet dispatched or run. To execute it, open the AKOREDE VITA repository's Actions tab, select **Pinned Vita3K licence evidence**, choose branch `feature/native-app-scaffold`, and run the workflow. Review the resulting artifact and its submodule status before using any new licence conclusions.
