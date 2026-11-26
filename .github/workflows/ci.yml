@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   repository-validation:
-    name: Repository and documentation checks
+    name: Repository, documentation, and prototype checks
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -31,9 +31,12 @@ jobs:
           test -f docs/ARCHITECTURE.md
           test -f docs/ROADMAP.md
           test -f docs/UPSTREAM_AUDIT.md
+          test -f app-prototype/index.html
+          test -f app-prototype/README.md
           grep -q "AKOREDE VITA" README.md
           grep -q "GPL" docs/UPSTREAM_AUDIT.md
-          echo "Required project foundation files are present."
+          grep -q "does not emulate" app-prototype/README.md
+          echo "Required project and prototype files are present."
 
       - name: Check README local documentation links
         shell: bash
@@ -43,7 +46,7 @@ jobs:
           from pathlib import Path
           import re
           readme = Path("README.md").read_text(encoding="utf-8")
-          links = re.findall(r"\[[^]]+\]\(([^)]+)\)", readme)
+          links = re.findall(r"\\[[^]]+\\]\\(([^)]+)\\)", readme)
           missing = [
               link for link in links
               if not link.startswith(("https://", "http://", "#", "mailto:"))
@@ -53,6 +56,30 @@ jobs:
               raise SystemExit("Missing README link targets: " + ", ".join(missing))
           print(f"Validated {len(links)} README links.")
           PY
+
+      - name: Validate prototype HTML and JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import re
+          source = Path("app-prototype/index.html").read_text(encoding="utf-8")
+          class DocumentCheck(HTMLParser):
+              def error(self, message):
+                  raise RuntimeError(message)
+          DocumentCheck().feed(source)
+          scripts = re.findall(r"<script>(.*?)</script>", source, flags=re.S)
+          if len(scripts) != 1:
+              raise SystemExit("Expected exactly one inline application script.")
+          Path("/tmp/akorede-vita-prototype.js").write_text(scripts[0], encoding="utf-8")
+          for required in ("Game library", "Controllers", "Settings", "Core integration pending"):
+              if required not in source:
+                  raise SystemExit(f"Missing expected prototype section: {required}")
+          print("Prototype HTML structure and expected interface sections validated.")
+          PY
+          node --check /tmp/akorede-vita-prototype.js
 
   windows-toolchain-readiness:
     name: Windows C++ toolchain readiness
@@ -67,7 +94,7 @@ jobs:
           $ErrorActionPreference = "Stop"
           git --version
           cmake --version
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vswhere = "${env:ProgramFiles(x86)}\\Microsoft Visual Studio\\Installer\\vswhere.exe"
           if (-not (Test-Path $vswhere)) {
             throw "Visual Studio Installer / vswhere was not found on the runner."
           }
