@@ -4,7 +4,7 @@
 
 Targets: **Windows** and **Android**  
 Primary implementation language: **C++**  
-Project stage: **Foundation and architecture**
+Project stage: **Foundation complete; UI prototype started**
 
 > AKOREDE VITA is an unofficial community software project and is not affiliated with, endorsed by, or sponsored by Sony Interactive Entertainment.
 
@@ -12,7 +12,13 @@ Project stage: **Foundation and architecture**
 
 The project will investigate a hybrid development approach: build an original product experience and platform integration around a carefully reviewed, compatible open-source emulation foundation. The initial candidate for study is [Vita3K](https://github.com/Vita3K/Vita3K).
 
-No upstream source code has been copied into this repository yet. The first milestone is technical and licence review, followed by a reproducible development setup. Any future reuse or modification must comply with the upstream project's licence, notices, and source-distribution requirements.
+No upstream source code has been copied into this repository yet. Any future reuse or modification must comply with the upstream project's licence, notices, and source-distribution requirements.
+
+## Product interface prototype
+
+The first responsive, interactive interface prototype is in [app-prototype](app-prototype/). It includes a demo library, search, title details, controller settings, and application settings.
+
+**Important:** this is a UI-only prototype. It does not emulate games, scan game folders, or connect to an emulator core. Its catalogue entries are fictional placeholders.
 
 ## Planned capabilities
 
@@ -23,7 +29,7 @@ No upstream source code has been copied into this repository yet. The first mile
 - Save-data and user-data management
 - Diagnostic logs and compatibility reporting
 
-These are roadmap goals, not features currently implemented.
+These are roadmap goals, not features currently implemented in a native application.
 
 ## Repository guide
 
@@ -31,6 +37,7 @@ These are roadmap goals, not features currently implemented.
 - [Roadmap](docs/ROADMAP.md) — milestones and completion criteria
 - [Upstream audit](docs/UPSTREAM_AUDIT.md) — initial Vita3K architecture, build, and licence review
 - [Build pipeline](docs/BUILD_PIPELINE.md) — CI readiness checks and the path to real builds
+- [Interface prototype](app-prototype/README.md) — prototype scope and next integration steps
 - [Contributing](CONTRIBUTING.md) — contribution workflow
 
 ## Development status
@@ -38,8 +45,7 @@ These are roadmap goals, not features currently implemented.
 **Milestone 01 — Foundation and audit**
 
 - [x] Create project repository
-- [x] Document initial architecture
-- [x] Document the development roadmap
+- [x] Document initial architecture and roadmap
 - [x] Complete initial Vita3K architecture and licence review
 - [x] Select a conditional GPL-compliant downstream-fork direction
 - [x] Document upstream Windows and Android build requirements
@@ -47,6 +53,13 @@ These are roadmap goals, not features currently implemented.
 - [x] Add initial Windows and Android CI toolchain-readiness checks
 - [ ] Establish reproducible Windows and Android emulator builds
 - [ ] Record baseline tests and compatibility status
+
+**Milestone 02 — Product design and interface prototype**
+
+- [x] Build the first responsive, interactive UI prototype
+- [ ] Review the prototype on phone-sized and desktop-sized screens
+- [ ] Finalise visual identity, accessibility, and platform-specific interaction rules
+- [ ] Complete editable design specifications for the native application screens
 
 ## Legal and safety notes
 
