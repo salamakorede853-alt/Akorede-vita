@@ -19,7 +19,7 @@ No Vita3K source code has been copied into this repository. Any future reuse or 
 - [Browser interface prototype](app-prototype/) — responsive product UI demonstration.
 - [Native application scaffold](native/) — Windows Qt entry point, Android Kotlin/Jetpack Compose application, and shared C++ status bridge.
 
-The native apps currently display **Emulator core not connected**. The shared C++ bridge intentionally reports that the engine is not ready. These are application foundations, not playable emulators. The Android debug build is being added to CI; Windows Qt compilation and on-device testing remain outstanding.
+The native apps currently display **Emulator core not connected**. The shared C++ bridge intentionally reports that the engine is not ready. These are application foundations, not playable emulators. The shared C++ bridge, Windows Qt shell, and Android debug APK have all passed the current GitHub Actions build pipeline. These checks validate the scaffolds only; physical-device testing and emulator-core integration remain outstanding.
 
 ## Planned capabilities
 
@@ -36,7 +36,7 @@ These are roadmap goals, not currently completed features.
 
 - [Architecture](docs/ARCHITECTURE.md) — system boundaries and platform choices
 - [Roadmap](docs/ROADMAP.md) — milestones and completion criteria
-- [Upstream audit](docs/UPSTREAM_AUDIT.md) — initial Vita3K architecture, build, and licence review
+- [Upstream audit](docs/UPSTREAM_AUDIT.md) — initial Vita3K architecture and build review\n- [Licence audit](docs/LICENSE_AUDIT.md) — pinned Vita3K revision, preliminary dependency inventory, and outstanding compliance checks
 - [Build pipeline](docs/BUILD_PIPELINE.md) — CI jobs and build status
 - [Browser prototype](app-prototype/README.md) — UI-only prototype scope
 - [Native scaffold](native/README.md) — platform app build instructions
