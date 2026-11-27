@@ -135,6 +135,12 @@ jobs:
         with:
           arch: x64
 
+      - name: Select supported Python for Qt installer
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          check-latest: false
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
