@@ -151,6 +151,7 @@ jobs:
           arch: win64_msvc2022_64
           cache: true
           install-deps: false
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@f383b3c7d9658e881bd8ce8810057393bd934ee1
 
       - name: Resolve Windows native dependencies
         working-directory: upstream
