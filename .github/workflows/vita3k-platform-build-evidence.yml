@@ -25,7 +25,10 @@ jobs:
         run: |
           git clone --no-checkout https://github.com/Vita3K/Vita3K.git upstream
           git -C upstream checkout --detach "$VITA3K_REF"
-          git -C upstream submodule update --init --recursive
+          if ! git -C upstream submodule update --init --recursive; then
+            echo "SUBMODULE_INIT_FAILED=true" >> "$GITHUB_ENV"
+            echo "Recursive submodule initialization failed; preserving partial evidence."
+          fi
           test "$(git -C upstream rev-parse HEAD)" = "$VITA3K_REF"
           git -C upstream submodule status --recursive | tee evidence-android-submodules.txt
 
