@@ -135,6 +135,15 @@ jobs:
         with:
           arch: x64
 
+      - name: Set up sccache compiler launcher
+        uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba
+
+      - name: Verify MSVC and sccache are available
+        shell: pwsh
+        run: |
+          Get-Command cl.exe | Format-List Source
+          sccache --version
+
       - name: Select supported Python for Qt installer
         uses: actions/setup-python@v5
         with:
