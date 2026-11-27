@@ -1,0 +1,196 @@
+name: Vita3K platform build evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VITA3K_REF: c87e12578749d6267be9b0c669904fe22545b170
+  BUILD_CONFIG: Release
+  QT_VERSION: '6.11.0'
+
+jobs:
+  android:
+    name: Android dependency resolution and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      VCPKG_ROOT: /usr/local/share/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-binary-cache
+    steps:
+      - name: Check out pinned Vita3K source and submodules
+        uses: actions/checkout@v4
+        with:
+          repository: Vita3K/Vita3K
+          ref: ${{ env.VITA3K_REF }}
+          fetch-depth: 0
+          submodules: recursive
+          path: upstream
+
+      - name: Verify upstream revision
+        working-directory: upstream
+        run: |
+          test "$(git rev-parse HEAD)" = "$VITA3K_REF"
+          git submodule status --recursive | tee ../evidence-android-submodules.txt
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vita3k-vcpkg-android-${{ env.VITA3K_REF }}-${{ hashFiles('upstream/vcpkg.json', 'upstream/CMakeLists.txt', 'upstream/cmake/**') }}
+          restore-keys: |
+            vita3k-vcpkg-android-
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-provider: basic
+          validate-wrappers: false
+
+      - name: Set up Android SDK tools
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ''
+
+      - name: Resolve Android native dependencies
+        working-directory: upstream
+        run: |
+          mkdir -p "$VCPKG_DEFAULT_BINARY_CACHE"
+          bash ./.ci/setup-android.sh 2>&1 | tee ../android-vcpkg-resolution.log
+
+      - name: Capture Gradle dependency graph
+        working-directory: upstream/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon :app:dependencies 2>&1 | tee ../../android-gradle-dependencies.log
+
+      - name: Build pinned Android target
+        working-directory: upstream
+        run: |
+          bash ./.ci/build-android.sh ../android-build-output 2>&1 | tee ../android-build.log
+
+      - name: Collect Android build evidence
+        if: always()
+        working-directory: upstream
+        run: |
+          mkdir -p ../platform-evidence/android
+          cp ../android-vcpkg-resolution.log ../platform-evidence/android/ 2>/dev/null || true
+          cp ../android-gradle-dependencies.log ../platform-evidence/android/ 2>/dev/null || true
+          cp ../android-build.log ../platform-evidence/android/ 2>/dev/null || true
+          cp ../evidence-android-submodules.txt ../platform-evidence/android/ 2>/dev/null || true
+          git rev-parse HEAD > ../platform-evidence/android/upstream-commit.txt
+          git submodule status --recursive > ../platform-evidence/android/submodule-status.txt
+          vcpkg version > ../platform-evidence/android/vcpkg-version.txt 2>&1 || true
+          vcpkg list --triplet arm64-android > ../platform-evidence/android/vcpkg-arm64-android.txt 2>&1 || true
+          vcpkg list --triplet x64-android > ../platform-evidence/android/vcpkg-x64-android.txt 2>&1 || true
+          find android/app/.cxx -name CMakeCache.txt -type f -print 2>/dev/null | while read -r f; do
+            dest="../platform-evidence/android/cmake-cache/$(dirname "$f")"
+            mkdir -p "$dest"
+            cp "$f" "$dest/"
+          done
+          find android/app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \) -printf '%p %s bytes\n' 2>/dev/null > ../platform-evidence/android/build-output-inventory.txt || true
+
+      - name: Upload Android evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vita3k-android-build-evidence-c87e125
+          path: platform-evidence/android
+          if-no-files-found: warn
+          retention-days: 14
+
+  windows:
+    name: Windows MSVC dependency resolution and build
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      VCPKG_ROOT: C:\\vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: C:\\vcpkg-binary-cache
+    steps:
+      - name: Check out pinned Vita3K source and submodules
+        uses: actions/checkout@v4
+        with:
+          repository: Vita3K/Vita3K
+          ref: ${{ env.VITA3K_REF }}
+          fetch-depth: 0
+          submodules: recursive
+          path: upstream
+
+      - name: Verify upstream revision
+        working-directory: upstream
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$VITA3K_REF"
+          git submodule status --recursive | tee ../evidence-windows-submodules.txt
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+          key: vita3k-vcpkg-windows-${{ env.VITA3K_REF }}-${{ hashFiles('upstream/vcpkg.json', 'upstream/CMakeLists.txt', 'upstream/cmake/**') }}
+          restore-keys: |
+            vita3k-vcpkg-windows-
+
+      - name: Set up MSVC
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: qtmultimedia
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          cache: true
+          install-deps: false
+
+      - name: Resolve Windows native dependencies
+        working-directory: upstream
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          .\\.ci\\setup-windows-msvc.ps1 -VcpkgTriplet 'x64-windows-static-md'
+
+      - name: Build and test pinned Windows target
+        working-directory: upstream
+        shell: bash
+        run: |
+          bash ./.ci/build-desktop.sh --preset ci-windows-msvc --config "$BUILD_CONFIG" 2>&1 | tee ../windows-build.log
+
+      - name: Collect Windows build evidence
+        if: always()
+        working-directory: upstream
+        shell: bash
+        run: |
+          mkdir -p ../platform-evidence/windows
+          cp ../windows-build.log ../platform-evidence/windows/ 2>/dev/null || true
+          cp ../evidence-windows-submodules.txt ../platform-evidence/windows/ 2>/dev/null || true
+          git rev-parse HEAD > ../platform-evidence/windows/upstream-commit.txt
+          git submodule status --recursive > ../platform-evidence/windows/submodule-status.txt
+          cmake --version > ../platform-evidence/windows/cmake-version.txt 2>&1 || true
+          vcpkg version > ../platform-evidence/windows/vcpkg-version.txt 2>&1 || true
+          vcpkg list --triplet x64-windows-static-md > ../platform-evidence/windows/vcpkg-packages.txt 2>&1 || true
+          if [ -d build/ci-windows-msvc ]; then
+            find build/ci-windows-msvc -name CMakeCache.txt -type f -exec cp --parents {} ../platform-evidence/windows/ \; 2>/dev/null || true
+            find build/ci-windows-msvc -name '*.vcxproj' -type f | sort > ../platform-evidence/windows/project-files.txt
+          fi
+
+      - name: Upload Windows evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vita3k-windows-build-evidence-c87e125
+          path: platform-evidence/windows
+          if-no-files-found: warn
+          retention-days: 14
