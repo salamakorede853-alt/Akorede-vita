@@ -1,0 +1,55 @@
+name: Pinned Vita3K build-input evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect-build-inputs:
+    name: Capture Android and Windows build inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out AKOREDE VITA audit scripts
+        uses: actions/checkout@v4
+
+      - name: Clone pinned Vita3K source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --no-checkout https://github.com/Vita3K/Vita3K.git "$RUNNER_TEMP/vita3k-upstream"
+          git -C "$RUNNER_TEMP/vita3k-upstream" checkout --detach c87e12578749d6267be9b0c669904fe22545b170
+
+      - name: Initialize recursive submodules
+        id: submodules
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C "$RUNNER_TEMP/vita3k-upstream" submodule sync --recursive
+          git -C "$RUNNER_TEMP/vita3k-upstream" submodule update --init --recursive
+
+      - name: Collect platform build-input evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/collect_build_inputs.py "$RUNNER_TEMP/vita3k-upstream" "$RUNNER_TEMP/vita3k-build-input-evidence"
+
+      - name: Upload build-input evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vita3k-build-input-evidence-c87e125
+          path: ${{ runner.temp }}/vita3k-build-input-evidence/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Report recursive submodule failure
+        if: steps.submodules.outcome != 'success'
+        shell: bash
+        run: |
+          echo "Recursive submodule initialization did not complete. The artifact may contain partial configuration evidence."
+          exit 1
