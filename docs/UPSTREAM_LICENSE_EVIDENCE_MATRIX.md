@@ -22,8 +22,8 @@ The evidence collector records licence-like files, selected source-header notice
 | glslang | `external/glslang/LICENSE.txt`; pinned commit `fc9889c889561c5882e83819dcaffef5ed45529b` | Licence file explicitly describes multiple licences for glslang proper and its preprocessor | Identify exact compiled source groups and their licence terms; exclude optional/test/tool components only when build evidence confirms exclusion |
 | FFmpeg fork | `external/ffmpeg/copyright`; pinned commit `eaf918c97e76d3fa7ec5bfea63a307fced559e76` | Collected copyright file identifies LGPL-2.1 | Verify exact FFmpeg source/configuration, enabled codecs, archive contents, static-linking arrangement, relinkability materials, notices, and corresponding source for each platform |
 | substitute | `external/substitute/LICENSE.txt`; pinned commit `319da6b563d8da689f3b9df2fbb839edd41a1943` | General files are LGPL-2.1-or-later with an optional static-linking exception; file header notes identify `substrate.h` as LGPLv3 and `substitute.h`/generated files as public domain | Determine which files are built and whether the optional exception is relied upon; retain the relevant licence texts and notices |
-| psvpfstools | Pinned commit `e9c5c7c4489a20ce2cb1a8b517caf00556594a12`; archive contains no root licence file | Root project licence is unresolved by this evidence set | Obtain authoritative licence/provenance evidence from maintainers or rights holders before redistribution; inspect exact compiled files |
-| psvpfsparser | Pinned nested commit `05d43a06a6189302d31091c65e4fc8707476eef3`; no root licence file collected | Rights/licence status unresolved by this evidence set | Obtain authoritative licence/provenance evidence before redistribution |
+| psvpfstools | Pinned commit `e9c5c7c4489a20ce2cb1a8b517caf00556594a12`; exact Git tree contains `.gitmodules`, `CMakeLists.txt`, and four nested submodule pointers, with no root licence/notice file | Root project licence is unresolved by this evidence set | Obtain authoritative licence/provenance evidence from maintainers or rights holders before redistribution; inspect exact compiled files |
+| psvpfsparser | Pinned nested commit `05d43a06a6189302d31091c65e4fc8707476eef3`; exact GitHub contents listing for this commit contains source/header files plus `cmake` and `example`, but no root licence/notice file | Rights/licence status unresolved by this evidence set | Obtain authoritative licence/provenance evidence before redistribution |
 | libzrif | Pinned nested commit `7d1e69bee7d2f08ea5754eff4463c041aacd49af`; no licence file collected | Rights/licence status unresolved by this evidence set | Obtain authoritative licence/provenance evidence before redistribution |
 | libb64 | Pinned nested commit `3896b7a74c70baed0e2f6039a1dbd723e5d5cc8f`; `external/psvpfstools/libb64/LICENSE` | Copyright-only public-domain dedication text collected | Verify source provenance and which files are used |
 | zlib nested under psvpfstools | Pinned nested commit `cb210089eb06453199578993566012493f6f7d21`; only a nested contrib licence file was collected | The archive does not contain the nested zlib root licence evidence | Obtain the root licence at the exact commit and verify whether this nested copy or a system zlib is selected |
@@ -37,7 +37,13 @@ The evidence collector records licence-like files, selected source-header notice
 | Tracy | `external/tracy/LICENSE`; pinned commit `f2a4f2529e7e71844c9e434b877770a21ecf7587` | BSD-3-Clause evidence from prior exact-revision inspection | Confirm whether Tracy is enabled or distributed in each configuration; review nested bundled components if included |
 | LibAtrac9 | `external/LibAtrac9/LICENSE`; pinned commit `82767fe38823c32536726ea798f392b0b49e66b9` | MIT licence evidence collected | Confirm build inclusion and retain copyright/permission notice |
 
-## 3. Immediate blockers
+## 3. Exact-revision follow-up checks
+
+- The `psvpfstools` tree at `e9c5c7c4489a20ce2cb1a8b517caf00556594a12` confirms the top level contains only `.gitmodules`, `CMakeLists.txt`, and the four nested submodule pointers; no root licence/notice file is present in that tree. The nested URLs are recorded in the collected `.gitmodules` evidence.
+- The `psvpfsparser` tree at `05d43a06a6189302d31091c65e4fc8707476eef3` was checked directly. Its root listing contains source/header files and the `cmake` and `example` directories, but no root licence/notice file.
+- The GitHub API redirected the historical `libzrif` and nested `zlib` repository URLs to repository IDs that the connected GitHub reader could not retrieve. Their licence status therefore remains **unverified**, not presumed absent or unlicensed.
+
+## 4. Immediate blockers
 
 1. **psvpfstools, psvpfsparser, and libzrif:** obtain authoritative rights/licence evidence. Do not assume they are unlicensed, and do not clear redistribution without evidence.
 2. **Nested zlib:** collect the root licence at the pinned nested commit; the collected dotzlib contribution licence is not a substitute.
@@ -45,7 +51,7 @@ The evidence collector records licence-like files, selected source-header notice
 4. **glslang, Capstone, SDL, cubeb, substitute:** map the exact compiled source files to the correct licence and notices.
 5. **Android and Windows:** produce separate resolved dependency inventories because system libraries, bundled libraries, optional features, and package-manager versions can differ.
 
-## 4. Required next engineering task
+## 5. Required next engineering task
 
 Create a reproducible dependency-resolution report for each target:
 
