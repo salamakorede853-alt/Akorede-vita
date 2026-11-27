@@ -147,7 +147,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
-          .\\.ci\\setup-windows-msvc.ps1 -VcpkgTriplet 'x64-windows-static-md'
+          .\.ci\setup-windows-msvc.ps1 -VcpkgTriplet 'x64-windows-static-md'
 
       - name: Build and test pinned Windows target
         working-directory: upstream
