@@ -83,13 +83,14 @@ jobs:
           git rev-parse HEAD > ../platform-evidence/android/upstream-commit.txt
           git submodule status --recursive > ../platform-evidence/android/submodule-status.txt
           vcpkg version > ../platform-evidence/android/vcpkg-version.txt 2>&1 || true
-          vcpkg list --triplet arm64-android > ../platform-evidence/android/vcpkg-arm64-android.txt 2>&1 || true
-          vcpkg list --triplet x64-android > ../platform-evidence/android/vcpkg-x64-android.txt 2>&1 || true
-          find android/app/.cxx -name CMakeCache.txt -type f -print 2>/dev/null | while read -r f; do
-            dest="../platform-evidence/android/cmake-cache/$(dirname "$f")"
-            mkdir -p "$dest"
-            cp "$f" "$dest/"
-          done
+          vcpkg list > ../platform-evidence/android/vcpkg-installed-packages.txt 2>&1 || true
+          if [ -d android/app/.cxx ]; then
+            find android/app/.cxx -name CMakeCache.txt -type f -print | while read -r f; do
+              dest="../platform-evidence/android/cmake-cache/$(dirname "$f")"
+              mkdir -p "$dest"
+              cp "$f" "$dest/"
+            done
+          fi
           find android/app/build/outputs -type f \( -name '*.apk' -o -name '*.aab' \) -printf '%p %s bytes\n' 2>/dev/null > ../platform-evidence/android/build-output-inventory.txt || true
 
       - name: Upload Android evidence
@@ -167,7 +168,7 @@ jobs:
           git submodule status --recursive > ../platform-evidence/windows/submodule-status.txt
           cmake --version > ../platform-evidence/windows/cmake-version.txt 2>&1 || true
           vcpkg version > ../platform-evidence/windows/vcpkg-version.txt 2>&1 || true
-          vcpkg list --triplet x64-windows-static-md > ../platform-evidence/windows/vcpkg-packages.txt 2>&1 || true
+          vcpkg list > ../platform-evidence/windows/vcpkg-packages.txt 2>&1 || true
           if [ -d build/ci-windows-msvc ]; then
             find build/ci-windows-msvc -name CMakeCache.txt -type f -exec cp --parents {} ../platform-evidence/windows/ \; 2>/dev/null || true
             find build/ci-windows-msvc -name '*.vcxproj' -type f | sort > ../platform-evidence/windows/project-files.txt
