@@ -31,6 +31,7 @@ These are roadmap goals, not features currently implemented.
 - [Roadmap](docs/ROADMAP.md) — milestones and completion criteria
 - [Upstream audit](docs/UPSTREAM_AUDIT.md) — initial Vita3K architecture, build, and licence review
 - [Build pipeline](docs/BUILD_PIPELINE.md) — CI readiness checks and the path to real builds
+- [Platform build evidence](docs/PLATFORM_BUILD_EVIDENCE.md) — pinned upstream Android and Windows build procedure
 - [Contributing](CONTRIBUTING.md) — contribution workflow
 
 ## Development status
