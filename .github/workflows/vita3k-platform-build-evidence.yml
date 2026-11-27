@@ -20,20 +20,14 @@ jobs:
       VCPKG_ROOT: /usr/local/share/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-binary-cache
     steps:
-      - name: Check out pinned Vita3K source and submodules
-        uses: actions/checkout@v4
-        with:
-          repository: Vita3K/Vita3K
-          ref: ${{ env.VITA3K_REF }}
-          fetch-depth: 0
-          submodules: recursive
-          path: upstream
-
-      - name: Verify upstream revision
-        working-directory: upstream
+      - name: Clone and pin Vita3K source and submodules
+        shell: bash
         run: |
-          test "$(git rev-parse HEAD)" = "$VITA3K_REF"
-          git submodule status --recursive | tee ../evidence-android-submodules.txt
+          git clone --no-checkout https://github.com/Vita3K/Vita3K.git upstream
+          git -C upstream checkout --detach "$VITA3K_REF"
+          git -C upstream submodule update --init --recursive
+          test "$(git -C upstream rev-parse HEAD)" = "$VITA3K_REF"
+          git -C upstream submodule status --recursive | tee evidence-android-submodules.txt
 
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
@@ -115,21 +109,14 @@ jobs:
       VCPKG_ROOT: C:\\vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: C:\\vcpkg-binary-cache
     steps:
-      - name: Check out pinned Vita3K source and submodules
-        uses: actions/checkout@v4
-        with:
-          repository: Vita3K/Vita3K
-          ref: ${{ env.VITA3K_REF }}
-          fetch-depth: 0
-          submodules: recursive
-          path: upstream
-
-      - name: Verify upstream revision
-        working-directory: upstream
+      - name: Clone and pin Vita3K source and submodules
         shell: bash
         run: |
-          test "$(git rev-parse HEAD)" = "$VITA3K_REF"
-          git submodule status --recursive | tee ../evidence-windows-submodules.txt
+          git clone --no-checkout https://github.com/Vita3K/Vita3K.git upstream
+          git -C upstream checkout --detach "$VITA3K_REF"
+          git -C upstream submodule update --init --recursive
+          test "$(git -C upstream rev-parse HEAD)" = "$VITA3K_REF"
+          git -C upstream submodule status --recursive | tee evidence-windows-submodules.txt
 
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
