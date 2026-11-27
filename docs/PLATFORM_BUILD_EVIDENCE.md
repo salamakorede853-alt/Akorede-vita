@@ -13,7 +13,7 @@ and initializes its recursive submodules. It runs the upstream build scripts rat
 ## Android job
 
 - Runs the upstream `.ci/setup-android.sh` dependency setup.
-- Captures vcpkg package lists for `arm64-android` and `x64-android`.
+- Captures the installed vcpkg package inventory, including the two Android triplets (`arm64-android` and `x64-android`).
 - Captures the Gradle dependency report.
 - Runs the upstream Android `Reldebug` build path (no signing secrets are supplied).
 - Retains build logs, submodule revisions, CMake caches, and an inventory of produced APK/AAB files.
