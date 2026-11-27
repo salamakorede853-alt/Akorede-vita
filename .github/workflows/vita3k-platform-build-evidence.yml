@@ -112,6 +112,7 @@ jobs:
     env:
       VCPKG_ROOT: 'C:\vcpkg'
       VCPKG_DEFAULT_BINARY_CACHE: 'C:\vcpkg-binary-cache'
+      SCCACHE_GHA_ENABLED: 'true'
     steps:
       - name: Clone and pin Vita3K source and submodules
         shell: bash
