@@ -3,7 +3,7 @@
 from __future__ import annotations
 import argparse, csv, hashlib, json, re, shutil
 from pathlib import Path
-NOTICE_NAMES = re.compile(r"^(license|licence|copying|notice|copyright|authors|patents)(\\..*)?$", re.I)
+NOTICE_NAMES = re.compile(r"^(license|licence|copying|notice|copyright|authors|patents)(\..*)?$", re.I)
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--upstream", type=Path, required=True)
