@@ -206,6 +206,9 @@ jobs:
       VCPKG_DEFAULT_BINARY_CACHE: 'C:\vcpkg-binary-cache'
       SCCACHE_GHA_ENABLED: 'true'
     steps:
+      - name: Check out AKOREDE VITA tooling
+        uses: actions/checkout@v4
+
       - name: Clone and pin Vita3K source and submodules
         shell: bash
         run: |
