@@ -107,13 +107,10 @@ Blocking items:
 
 This is an engineering evidence gate, not legal advice. Do not distribute a Vita3K-derived APK or EXE until the applicable rights and licence obligations are resolved.
 
-## 7. Next engineering action
+## 7. Automated SBOM workflow
 
-The next work item is a dedicated SBOM-generation workflow that exports:
-- Android ARM64 SBOM;
-- Android x86_64 SBOM;
-- Windows x64 SBOM;
-- a combined third-party notices directory; and
-- a machine-readable component-to-source/licence mapping.
+An automated CycloneDX JSON workflow has been added to `.github/workflows/vita3k-platform-build-evidence.yml`. It generates separate Android ARM64 and Android x86_64 reports from native shared libraries extracted from the built APK, plus a Windows x64 report from the built `Vita3K.exe`. It also collects third-party licence/notice files and packages all three reports with the notice directories into the `akorede-vita-platform-sboms-and-third-party-notices` artifact.
 
-That workflow must consume the actual configured build trees and final package contents. It must not infer runtime inclusion from a submodule list alone.
+See [AUTOMATED_SBOM_WORKFLOW.md](AUTOMATED_SBOM_WORKFLOW.md) for the exact scope, outputs, and limitations. These are binary-focused preliminary SBOMs: statically linked components may not be individually discoverable, and the notice collection does not establish which components were shipped or clear their licences.
+
+The workflow must be run successfully before treating the three reports and notice bundle as generated evidence. The release gate remains **NOT CLEARED FOR REDISTRIBUTION**.
