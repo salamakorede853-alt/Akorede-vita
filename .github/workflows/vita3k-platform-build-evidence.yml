@@ -20,6 +20,9 @@ jobs:
       VCPKG_ROOT: /usr/local/share/vcpkg
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-binary-cache
     steps:
+      - name: Check out AKOREDE VITA tooling
+        uses: actions/checkout@v4
+
       - name: Clone and pin Vita3K source and submodules
         shell: bash
         run: |
@@ -74,6 +77,40 @@ jobs:
         run: |
           bash ./.ci/build-android.sh ../android-build-output 2>&1 | tee ../android-build.log
 
+      - name: Prepare per-ABI SBOM inputs and Android notices
+        if: success()
+        shell: bash
+        run: |
+          mkdir -p platform-evidence/android/sbom
+          APK="$(find upstream/android/app/build/outputs -type f -name '*.apk' | head -n 1)"
+          test -n "$APK"
+          python3 scripts/prepare_platform_sbom.py \
+            --apk "$APK" \
+            --upstream-commit "$VITA3K_REF" \
+            --sbom-input-dir platform-evidence/android/sbom-inputs \
+            --notice-output platform-evidence/android/third-party-notices \
+            --notice-root "$GITHUB_WORKSPACE/upstream"
+
+      - name: Generate Android ARM64 CycloneDX SBOM
+        if: success()
+        uses: anchore/sbom-action@v0
+        with:
+          path: platform-evidence/android/sbom-inputs/android-arm64
+          format: cyclonedx-json
+          output-file: platform-evidence/android/sbom/android-arm64.cyclonedx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Generate Android x86_64 CycloneDX SBOM
+        if: success()
+        uses: anchore/sbom-action@v0
+        with:
+          path: platform-evidence/android/sbom-inputs/android-x86_64
+          format: cyclonedx-json
+          output-file: platform-evidence/android/sbom/android-x86_64.cyclonedx.json
+          upload-artifact: false
+          upload-release-assets: false
+
       - name: Collect Android build evidence
         if: always()
         working-directory: upstream
@@ -104,6 +141,61 @@ jobs:
           path: platform-evidence/android
           if-no-files-found: warn
           retention-days: 14
+
+  package-sboms:
+    name: Package platform SBOMs and third-party notices
+    runs-on: ubuntu-latest
+    needs: [android, windows]
+    if: success()
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Download Android build evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: vita3k-android-build-evidence-c87e125
+          path: assembled/android
+
+      - name: Download Windows build evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: vita3k-windows-build-evidence-c87e125
+          path: assembled/windows
+
+      - name: Assemble three SBOM reports and notices directory
+        shell: bash
+        run: |
+          mkdir -p sbom-package/android-arm64 sbom-package/android-x86_64 sbom-package/windows-x64
+          mkdir -p sbom-package/third-party-licence-notices/android sbom-package/third-party-licence-notices/windows
+          cp assembled/android/sbom/android-arm64.cyclonedx.json sbom-package/android-arm64/
+          cp assembled/android/sbom/android-x86_64.cyclonedx.json sbom-package/android-x86_64/
+          cp assembled/windows/sbom/windows-x64.cyclonedx.json sbom-package/windows-x64/
+          cp -R assembled/android/third-party-notices/. sbom-package/third-party-licence-notices/android/
+          cp -R assembled/windows/third-party-notices/. sbom-package/third-party-licence-notices/windows/
+          cat > sbom-package/README.md <<'EOF'
+          # AKOREDE VITA platform SBOM package
+
+          Contains separate CycloneDX JSON reports for Android ARM64, Android x86_64,
+          and Windows x64, plus collected third-party licence/notice evidence.
+
+          Android reports scan native shared libraries extracted from the APK for the
+          corresponding ABI. Windows scans the built Vita3K.exe. Syft may not identify
+          every statically linked component from binaries; the notices directory is
+          an evidence collection, not a complete legal notice determination.
+
+          Unresolved licence issues remain. This package does not grant redistribution
+          clearance. See docs/PLATFORM_SBOM_AND_RELEASE_GATE.md in the repository.
+          EOF
+          find sbom-package -type f -print | sort
+
+      - name: Upload combined SBOM and notices package
+        uses: actions/upload-artifact@v4
+        with:
+          name: akorede-vita-platform-sboms-and-third-party-notices
+          path: sbom-package
+          if-no-files-found: error
+          retention-days: 30
 
   windows:
     name: Windows MSVC dependency resolution and build
@@ -175,6 +267,27 @@ jobs:
         shell: bash
         run: |
           bash ./.ci/build-desktop.sh --preset ci-windows-msvc --config "$BUILD_CONFIG" 2>&1 | tee ../windows-build.log
+
+      - name: Collect Windows third-party notices
+        if: success()
+        shell: pwsh
+        run: |
+          python scripts/collect_windows_notices.py `
+            --upstream upstream `
+            --vcpkg-installed "$env:VCPKG_ROOT/installed/x64-windows-static-md" `
+            --output platform-evidence/windows/third-party-notices `
+            --commit "$env:VITA3K_REF"
+          New-Item -ItemType Directory -Force -Path platform-evidence/windows/sbom | Out-Null
+
+      - name: Generate Windows x64 CycloneDX SBOM
+        if: success()
+        uses: anchore/sbom-action@v0
+        with:
+          file: upstream/build/ci-windows-msvc/bin/Release/Vita3K.exe
+          format: cyclonedx-json
+          output-file: platform-evidence/windows/sbom/windows-x64.cyclonedx.json
+          upload-artifact: false
+          upload-release-assets: false
 
       - name: Collect Windows build evidence
         if: always()
