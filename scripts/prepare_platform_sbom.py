@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse, csv, hashlib, json, re, shutil, zipfile
 from pathlib import Path
 
-NOTICE_NAMES = re.compile(r"^(license|licence|copying|notice|copyright|authors|patents)(\\..*)?$", re.I)
+NOTICE_NAMES = re.compile(r"^(license|licence|copying|notice|copyright|authors|patents)(\..*)?$", re.I)
 
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
